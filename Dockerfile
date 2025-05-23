@@ -13,7 +13,7 @@ RUN find . -name "API_Estudiantes_Test.csproj" -exec dotnet publish {} -c Releas
 
 # Si lo anterior falla, intentar buscar la API por nombre
 RUN if [ ! -d /app/out ]; then \
-    find . -name "*.csproj" | grep -i api | xargs -I{} dotnet publish {} -c Release -o /app/out; \
+    find . -name "*.csproj" | grep -i api | xargs -I {} dotnet publish {} -c Release -o /app/out; \
     fi
 
 # Etapa final
