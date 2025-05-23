@@ -8,6 +8,7 @@ namespace ControlEscolar
 {
     internal static class Program
     {
+        //comentario para ver si se sube el cambio
         private static Logger? _logger;
         /// <summary>
         ///  The main entry point for the application.

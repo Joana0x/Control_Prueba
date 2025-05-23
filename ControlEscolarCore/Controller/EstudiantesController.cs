@@ -13,6 +13,7 @@ namespace ControlEscolarCore.Controller
 {
    public class EstudiantesController
     {
+        //comentario x
         private static readonly Logger _logger = LogManager.GetLogger("DiseñoForms.Controller.EstudiantesController");
         private readonly EstudiantesDataAccess _estudiantesData;
         private readonly PersonasDataAccess _personasData;
