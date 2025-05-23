@@ -24,10 +24,10 @@
 **/values.dev.yaml
 README.md
 
-# Ignorar específicamente el proyecto Windows Forms
+# Ignorar específicamente proyectos que no necesita la API
 ControlEscolar/
+ControlEscolarCore/
 ControlEscolar.Tests/
-# Cualquier otro proyecto específico de Windows que no sea necesario para la API
 
 # Ignorar archivos de desarrollo
 **/*.user
