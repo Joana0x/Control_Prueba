@@ -12,37 +12,37 @@ using Npgsql;
 
 namespace ControlEscolarCore.Data
 {
-    /// <summary>
-    /// Clase que maneje el acceso a datos PostgresSQL, incluyendo conexiones
-    /// </summary>
     public class PostgreSQLDataAccess
     {
-        //Logger usando el logginManeger
         private static readonly Logger _logger = LoggingManager.GetLogger("ControlEscolar.Data.PostgreSQLDataAccess");
 
-        //Cadena de conexión desde App.config
-        private readonly string _ConnectionString = System.Configuration.ConfigurationManager.ConnectionStrings["ConexionBD"].ConnectionString;
-
-
+        private readonly string _ConnectionString;
         private NpgsqlConnection _connection;
         private static PostgreSQLDataAccess? _instance;
 
-        private PostgreSQLDataAccess ()
+        private PostgreSQLDataAccess()
         {
             try
             {
+                // Leer la cadena de conexión desde una variable de entorno (Render usa esta forma)
+                _ConnectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING");
+
+                if (string.IsNullOrWhiteSpace(_ConnectionString))
+                {
+                    throw new Exception("La variable POSTGRES_CONNECTION_STRING no está configurada.");
+                }
+
                 _connection = new NpgsqlConnection(_ConnectionString);
-                _logger.Info("Instancia de cceso a datos creada correctamente");
+                _logger.Info("Instancia de acceso a datos creada correctamente");
             }
             catch (Exception ex)
             {
                 _logger.Fatal(ex, "Error al inicializar el acceso a la base de datos");
-
                 throw;
             }
         }
 
-        public static PostgreSQLDataAccess GetInstance ()
+        public static PostgreSQLDataAccess GetInstance()
         {
             if (_instance == null)
             {
@@ -60,18 +60,14 @@ namespace ControlEscolarCore.Data
                     _connection.Open();
                     _logger.Info("Conexión a la base de datos establecida correctamente");
                 }
-
                 return true;
             }
             catch (Exception ex)
             {
                 _logger.Error(ex, "Error al conectar a la base de datos");
-
-                // NUEVA LÍNEA: lanza excepción para que el sistema lo capture y no siga mal
                 throw new Exception("No se pudo conectar a la base de datos. Verifica la configuración.", ex);
             }
         }
-
 
         public bool Disconnect()
         {
@@ -93,29 +89,68 @@ namespace ControlEscolarCore.Data
 
         public DataTable ExecuteQuery_Reader(string query, params NpgsqlParameter[] parameters)
         {
-            DataTable dataTable= new DataTable();
+            DataTable dataTable = new DataTable();
             try
             {
-                _logger.Debug($"Ejecutando consulta: {query}"); 
-                using(NpgsqlCommand command = CreateCommand(query, parameters))
+                _logger.Debug($"Ejecutando consulta: {query}");
+                using (NpgsqlCommand command = CreateCommand(query, parameters))
+                using (NpgsqlDataAdapter adapter = new NpgsqlDataAdapter(command))
                 {
-                   
-                    using (NpgsqlDataAdapter adapter = new NpgsqlDataAdapter(command))
-                    {
-                        adapter.Fill(dataTable);
-                        _logger.Debug($"Consulta ejecutada correctamente: {query}");
-                    }
+                    adapter.Fill(dataTable);
+                    _logger.Debug("Consulta ejecutada correctamente");
                 }
                 return dataTable;
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, $"Error al ejecutar una consulta en la base de datos:{query} ");
+                _logger.Error(ex, $"Error al ejecutar una consulta: {query}");
                 throw;
             }
         }
 
-        //prepra con los parametros
+        public int ExecuteNonQuery(string query, params NpgsqlParameter[] parameters)
+        {
+            try
+            {
+                _logger.Debug($"Ejecutando operación: {query}");
+                using (NpgsqlCommand command = CreateCommand(query, parameters))
+                {
+                    int result = command.ExecuteNonQuery();
+                    _logger.Debug($"Filas afectadas: {result}");
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Error al ejecutar operación: {query}");
+                throw;
+            }
+        }
+
+        public object? ExecuteScalar(string query, params NpgsqlParameter[] parameters)
+        {
+            try
+            {
+                _logger.Debug($"Ejecutando consulta escalar: {query}");
+                using (NpgsqlCommand command = CreateCommand(query, parameters))
+                {
+                    object? result = command.ExecuteScalar();
+                    _logger.Debug($"Resultado escalar: {result}");
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, $"Error al ejecutar consulta escalar: {query}");
+                throw;
+            }
+        }
+
+        public NpgsqlParameter CreateParameter(string name, object value)
+        {
+            return new NpgsqlParameter(name, value ?? DBNull.Value);
+        }
+
         private NpgsqlCommand CreateCommand(string query, NpgsqlParameter[] parameters)
         {
             NpgsqlCommand command = new NpgsqlCommand(query, _connection);
@@ -127,53 +162,7 @@ namespace ControlEscolarCore.Data
                     _logger.Trace($"Parámetro: {param.ParameterName} = {param.Value ?? "NULL"}");
                 }
             }
-             return command;
+            return command;
         }
-
-        public int ExecuteNonQuery(string query, params NpgsqlParameter[] parameters)
-        {
-            try
-            {
-                _logger.Debug($"Ejecutando operación: {query}");
-                using (NpgsqlCommand command = CreateCommand(query, parameters))
-                {
-                    int result = command.ExecuteNonQuery();
-                    _logger.Debug($"Operación ejecutada exitosamente. Filas afectadas: {result}");
-                    return result;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, $"Error al ejecutar la operación: {query}");
-                throw;
-            }
-        }
-
-
-        public object? ExecuteScalar(string query, params NpgsqlParameter[] parameters)
-        {
-            try
-            {
-                _logger.Debug($"Ejecutando consulta escalar: {query}");
-                using (NpgsqlCommand command = CreateCommand(query, parameters))
-                {
-                    object? result = command.ExecuteScalar();
-                    _logger.Debug($"Consulta escalar ejecutada correctamente. ID afectado: {result}");
-                    return result;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.Error(ex, $"Error al ejecutar una consulta escalar en la base de datos: {query}");
-                throw;
-            }
-        }
-
-        public NpgsqlParameter CreateParameter(string name, object value)
-        {
-            //?? es como un if enfocado a nulos
-            return new NpgsqlParameter(name, value ?? DBNull.Value);
-        }
-
     }
 }
