@@ -28,11 +28,12 @@ namespace ControlEstudiantesAPI
         /// <param name="fechaFin">Fecha final del rango</param>
         /// <returns>Lista de estudiantes</returns>
         [HttpGet("listado")]  // Ahora tiene una ruta específica
+        
         public IActionResult GetEstudiantes(
-            [FromQuery] bool soloActivos = true,
-            [FromQuery] int tipoFecha = 0,
-            [FromQuery] DateTime? fechaInicio = null,
-            [FromQuery] DateTime? fechaFin = null)
+    [FromQuery] bool soloActivos = true,
+    [FromQuery] int tipoFecha = 0,
+    [FromQuery] DateTime? fechaInicio = null,
+    [FromQuery] DateTime? fechaFin = null)
         {
             try
             {
@@ -46,10 +47,12 @@ namespace ControlEstudiantesAPI
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al obtener estudiantes");
-                return StatusCode(500, "Error interno del servidor" + ex.Message);
+                // Log detallado + mensaje claro para Postman
+                _logger.LogError(ex, $"Error al obtener estudiantes: {ex.Message}");
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
         }
+
 
     }
 }

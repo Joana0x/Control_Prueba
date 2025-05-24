@@ -24,19 +24,21 @@ namespace ControlEscolarCore.Data
         {
             try
             {
-                // Leer la cadena desde variable de entorno
                 _ConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                                    ?? throw new Exception("No se encontró la variable de entorno ConnectionStrings__DefaultConnection");
+                    ?? throw new Exception(" Variable de entorno 'ConnectionStrings__DefaultConnection' no encontrada.");
+
+                _logger.Info($" Cadena de conexión obtenida: {_ConnectionString}");
 
                 _connection = new NpgsqlConnection(_ConnectionString);
-                _logger.Info("Instancia de acceso a datos creada correctamente");
+                _logger.Info("Instancia de acceso a datos creada correctamente.");
             }
             catch (Exception ex)
             {
-                _logger.Fatal(ex, "Error al inicializar el acceso a la base de datos");
+                _logger.Fatal(ex, " Error al inicializar el acceso a la base de datos");
                 throw;
             }
         }
+
         public static PostgreSQLDataAccess GetInstance()
         {
             if (_instance == null)
