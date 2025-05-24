@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using ControlEscolarCore.Utilities;
 using Microsoft.Extensions.Configuration;
 using NLog;
 using Npgsql;
+
 
 namespace ControlEscolarCore.Data
 {
@@ -20,26 +22,33 @@ namespace ControlEscolarCore.Data
         private NpgsqlConnection _connection;
         private static PostgreSQLDataAccess? _instance;
 
-        public PostgreSQLDataAccess()
+public PostgreSQLDataAccess()
+    {
+        try
         {
-            try
-            {
-                _ConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                    ?? throw new Exception(" Variable de entorno 'ConnectionStrings__DefaultConnection' no encontrada.");
+            // Construimos el objeto de configuración
+            var configBuilder = new ConfigurationBuilder().AddEnvironmentVariables();
+            var configuration = configBuilder.Build();
 
-                _logger.Info($" Cadena de conexión obtenida: {_ConnectionString}");
+            // Obtenemos la cadena de conexión
+            _ConnectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? throw new Exception("Cadena de conexión 'DefaultConnection' no encontrada en las variables de entorno.");
 
-                _connection = new NpgsqlConnection(_ConnectionString);
-                _logger.Info("Instancia de acceso a datos creada correctamente.");
-            }
-            catch (Exception ex)
-            {
-                _logger.Fatal(ex, " Error al inicializar el acceso a la base de datos");
-                throw;
-            }
+            _logger.Info($"Cadena de conexión obtenida: {_ConnectionString}");
+
+            _connection = new NpgsqlConnection(_ConnectionString);
+            _logger.Info("Instancia de acceso a datos creada correctamente.");
         }
+        catch (Exception ex)
+        {
+            _logger.Fatal(ex, "Error al inicializar el acceso a la base de datos");
+            throw;
+        }
+    }
 
-        public static PostgreSQLDataAccess GetInstance()
+
+
+    public static PostgreSQLDataAccess GetInstance()
         {
             if (_instance == null)
             {
