@@ -20,17 +20,13 @@ namespace ControlEscolarCore.Data
         private NpgsqlConnection _connection;
         private static PostgreSQLDataAccess? _instance;
 
-        private PostgreSQLDataAccess()
+        public PostgreSQLDataAccess()
         {
             try
             {
-                // Leer la cadena de conexión desde una variable de entorno (Render usa esta forma)
-                _ConnectionString = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING");
-
-                if (string.IsNullOrWhiteSpace(_ConnectionString))
-                {
-                    throw new Exception("La variable POSTGRES_CONNECTION_STRING no está configurada.");
-                }
+                // Leer la cadena desde variable de entorno
+                _ConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                                    ?? throw new Exception("No se encontró la variable de entorno ConnectionStrings__DefaultConnection");
 
                 _connection = new NpgsqlConnection(_ConnectionString);
                 _logger.Info("Instancia de acceso a datos creada correctamente");
@@ -41,7 +37,6 @@ namespace ControlEscolarCore.Data
                 throw;
             }
         }
-
         public static PostgreSQLDataAccess GetInstance()
         {
             if (_instance == null)
